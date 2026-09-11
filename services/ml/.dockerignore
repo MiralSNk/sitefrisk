@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.venv/
+.git
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+models/
+checkpoints/
+*.safetensors
+*.bin
+*.pt
+*.ckpt
