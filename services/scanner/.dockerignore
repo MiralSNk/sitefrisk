@@ -1,0 +1,7 @@
+scanner
+*.log
+.git
+*.test
+coverage.out
+.idea/
+.vscode/

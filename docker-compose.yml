@@ -1,0 +1,49 @@
+services:
+  web:
+    build: ./services/web
+    ports:
+      - "${WEB_PORT}:${WEB_PORT}"
+    environment:
+      - PORT=${WEB_PORT}
+    depends_on:
+      - auth
+      - scanner
+    networks:
+      - public
+      - internal
+  
+  auth:
+    build: ./services/auth
+    expose:
+      - "${AUTH_PORT}"
+    environment:
+      - AUTH_PORT=${AUTH_PORT}
+    networks:
+      - internal
+
+  scanner:
+    build: ./services/scanner
+    expose:
+      - "${SCANNER_PORT}"
+    environment:
+      - SCANNER_PORT=${SCANNER_PORT}
+    depends_on:
+      - ml
+    networks:
+      - internal
+
+  ml:
+    build: ./services/ml
+    expose:
+      - "${ML_PORT}"
+    environment:
+      - ML_PORT=${ML_PORT}
+    networks:
+      - internal
+
+networks:
+  public:
+  internal:
+
+#TODO: append Posgres/Redis/NATS + (maybe Kafka + K8t)
+#TODO: сейчас `public` избыточно, однако в будующем можно добавить `reverse-proxy/API Gateway перед web`

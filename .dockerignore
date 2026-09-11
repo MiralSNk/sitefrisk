@@ -1,0 +1,43 @@
+# --- Python ---
+__pycache__/
+*.pyc
+services/ml/.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# --- ML-артефакты ---
+services/ml/models/
+services/ml/checkpoints/
+*.safetensors
+*.bin
+*.pt
+*.ckpt
+
+# --- Java / Maven ---
+target/
+*.class
+
+# --- Node / Next.js ---
+node_modules/
+.next/
+services/web/.next/
+services/web/node_modules/
+
+# --- Go ---
+services/scanner/scanner
+services/scanner/*.exe
+
+# --- Секреты и окружение ---
+.env
+.env.*
+!*.env.example
+
+# --- IDE ---
+.vscode/
+.idea/
+*.iml
+
+# --- OS ---
+.DS_Store
