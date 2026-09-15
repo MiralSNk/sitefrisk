@@ -7,10 +7,10 @@ import (
 
 var ( // -> Кастомные ошибки
 
-	// ErrValidationCategory кастомная ошибка для не найденой категории, проверять через errors.Is
+	// ErrValidationCategory кастомная ошибка для не найденной категории, проверять через errors.Is
 	ErrValidationCategory = errors.New("такой категории не существует")
 	// ErrValidationKey кастомная ошибка для пустого ключа, проверять через errors.Is
-	ErrValidationKey = errors.New("пустой ключь")
+	ErrValidationKey = errors.New("пустой ключ")
 	// ErrValidationCategoryVoid кастомная ошибка для пустой категории, проверять через errors.Is
 	ErrValidationCategoryVoid = errors.New("пустая категория")
 	// ErrVoidFact кастомная ошибка для пустого fact, проверять через errors.Is

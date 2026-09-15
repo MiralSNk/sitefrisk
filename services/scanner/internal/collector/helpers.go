@@ -45,6 +45,9 @@ func workerCollectors(
 
 			f, err := job.Collect(ctx, targetURL)
 
+			// Не репортим ошибку, если она — следствие отмены родительского контекста:
+			// validation добавит ctx.Err() в финальное событие сама, а в промежуточном
+			// EventCollectorDone дублировать не нужно.
 			if err != nil && errors.Is(err, ctx.Err()) {
 				err = nil
 			}
