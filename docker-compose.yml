@@ -10,7 +10,8 @@ services:
       - scanner
     networks:
       - public
-      - internal
+      - web-auth
+      - web-scanner
   
   auth:
     build: ./services/auth
@@ -19,7 +20,7 @@ services:
     environment:
       - AUTH_PORT=${AUTH_PORT}
     networks:
-      - internal
+      - web-auth
 
   scanner:
     build: ./services/scanner
@@ -30,7 +31,8 @@ services:
     depends_on:
       - ml
     networks:
-      - internal
+      - web-scanner
+      - scanner-ml
 
   ml:
     build: ./services/ml
@@ -39,11 +41,13 @@ services:
     environment:
       - ML_PORT=${ML_PORT}
     networks:
-      - internal
+      - scanner-ml
 
 networks:
   public:
-  internal:
+  web-auth:
+  web-scanner:
+  scanner-ml:
 
 #TODO: append Posgres/Redis/NATS + (maybe Kafka + K8t)
 #TODO: сейчас `public` избыточно, однако в будующем можно добавить `reverse-proxy/API Gateway перед web`
