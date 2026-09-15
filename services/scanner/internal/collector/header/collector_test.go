@@ -2,32 +2,79 @@ package header_test
 
 import (
 	"context"
+	"errors"
+	"io"
+	"log/slog"
 	"net/http"
-	"net/http/httptest"
+	"os"
+	"strings"
 	"testing"
-	"time"
 
 	"github.com/MiralSNk/sitefrisk/services/scanner/internal/collector/header"
+	"github.com/MiralSNk/sitefrisk/services/scanner/internal/ssrf"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+func TestMain(m *testing.M) {
+	// Глушим логгер ssrf: тесты намеренно бьют в приватные адреса,
+	// и предупреждения об этом — ожидаемый шум.
+	ssrf.SetLogger(slog.New(slog.NewTextHandler(io.Discard, nil)))
+	os.Exit(m.Run())
+}
+
+// --- test helpers ---------------------------------------------------------
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
+
+// newTestClient возвращает клиент с mock RoundTripper. Используется
+// в тестах, где нужно изолировать логику HeaderCollector от ssrf-проверок
+// и реальной сети.
+func newTestClient(rt http.RoundTripper) *http.Client {
+	return &http.Client{
+		Transport: rt,
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+}
+
+func newResponse(status int, headers map[string]string) *http.Response {
+	h := http.Header{}
+	for k, v := range headers {
+		h.Set(k, v)
+	}
+	return &http.Response{
+		StatusCode: status,
+		Header:     h,
+		Body:       io.NopCloser(strings.NewReader("")),
+	}
+}
+
+// Публичный URL: ssrf.SafeDo пропускает такой хост, mock RoundTripper
+// возвращает заготовленный ответ. Сети нет — тест чистый unit.
+const publicURL = "http://8.8.8.8/"
+
+// --- Collect: парсинг заголовков ------------------------------------------
+
 func TestHeaderCollector_Collect(t *testing.T) {
 	cases := []struct {
 		name     string
-		handler  http.HandlerFunc
-		expErr   error
+		headers  map[string]string
 		expFacts map[string]string
 	}{
 		{
 			name: "Все заголовки присутствуют",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("Content-Security-Policy", "default-src 'self'")
-				w.Header().Set("Strict-Transport-Security", "max-age=31536000")
-				w.Header().Set("X-Frame-Options", "DENY")
+			headers: map[string]string{
+				"Content-Security-Policy":   "default-src 'self'",
+				"Strict-Transport-Security": "max-age=31536000",
+				"X-Frame-Options":           "DENY",
 			},
-			expErr: nil,
 			expFacts: map[string]string{
 				"Content-Security-Policy":   "default-src 'self'",
 				"Strict-Transport-Security": "max-age=31536000",
@@ -36,27 +83,24 @@ func TestHeaderCollector_Collect(t *testing.T) {
 		},
 		{
 			name: "Часть заголовков отсутствует",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("X-Frame-Options", "SAMEORIGIN")
+			headers: map[string]string{
+				"X-Frame-Options": "SAMEORIGIN",
 			},
-			expErr: nil,
 			expFacts: map[string]string{
 				"X-Frame-Options": "SAMEORIGIN",
 			},
 		},
 		{
 			name:     "Нет ни одного заголовка",
-			handler:  func(w http.ResponseWriter, r *http.Request) {},
-			expErr:   nil,
+			headers:  map[string]string{},
 			expFacts: map[string]string{},
 		},
 		{
 			name: "Пустое значение не считается",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("Content-Security-Policy", "")
-				w.Header().Set("X-Frame-Options", "DENY")
+			headers: map[string]string{
+				"Content-Security-Policy": "",
+				"X-Frame-Options":         "DENY",
 			},
-			expErr: nil,
 			expFacts: map[string]string{
 				"X-Frame-Options": "DENY",
 			},
@@ -67,18 +111,14 @@ func TestHeaderCollector_Collect(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			srv := httptest.NewServer(tc.handler)
-			defer srv.Close()
+			rt := roundTripFunc(func(*http.Request) (*http.Response, error) {
+				return newResponse(http.StatusOK, tc.headers), nil
+			})
 
-			c := header.NewHeaderCollector()
-			got, err := c.Collect(context.Background(), srv.URL)
+			c := header.NewHeaderCollectorWithClient(newTestClient(rt))
+			got, err := c.Collect(context.Background(), publicURL)
 
-			if tc.expErr == nil {
-				require.NoError(t, err)
-			} else {
-				require.ErrorIs(t, err, tc.expErr)
-				return
-			}
+			require.NoError(t, err)
 
 			gotMap := make(map[string]string, len(got))
 			for _, f := range got {
@@ -89,40 +129,102 @@ func TestHeaderCollector_Collect(t *testing.T) {
 	}
 }
 
-func TestHeaderCollector_Collect_RequestError(t *testing.T) {
-	c := header.NewHeaderCollector()
+// --- Collect: ошибки на разных уровнях ------------------------------------
 
+// Некорректный URL: ошибка при сборке запроса, до SafeDo.
+func TestHeaderCollector_Collect_RequestError(t *testing.T) {
+	t.Parallel()
+
+	rt := roundTripFunc(func(*http.Request) (*http.Response, error) {
+		return newResponse(http.StatusOK, nil), nil
+	})
+
+	c := header.NewHeaderCollectorWithClient(newTestClient(rt))
 	_, err := c.Collect(context.Background(), "://broken")
 
 	require.ErrorIs(t, err, header.ErrRequest)
 }
 
-func TestHeaderCollector_Collect_ServerUnavailable(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
-	url := srv.URL
-	srv.Close()
+// Сетевая ошибка от клиента: обёрнута в ErrResponse, исходная причина
+// доступна через errors.Is.
+func TestHeaderCollector_Collect_ResponseError(t *testing.T) {
+	t.Parallel()
 
-	c := header.NewHeaderCollector()
-	_, err := c.Collect(context.Background(), url)
+	wantErr := errors.New("connection refused")
+	rt := roundTripFunc(func(*http.Request) (*http.Response, error) {
+		return nil, wantErr
+	})
+
+	c := header.NewHeaderCollectorWithClient(newTestClient(rt))
+	_, err := c.Collect(context.Background(), publicURL)
 
 	require.ErrorIs(t, err, header.ErrResponse)
+	require.ErrorIs(t, err, wantErr, "исходная ошибка должна быть в цепочке")
 }
 
+// Отмена контекста: клиент возвращает ctx.Err(), он обёрнут в ErrResponse.
 func TestHeaderCollector_Collect_ContextCanceled(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		time.Sleep(100 * time.Millisecond)
-	}))
-	defer srv.Close()
+	t.Parallel()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		time.Sleep(20 * time.Millisecond) // даём запросу время уйти на сервер
-		cancel()
-	}()
+	cancel() // отменяем сразу
 
-	c := header.NewHeaderCollector()
-	_, err := c.Collect(ctx, srv.URL)
+	rt := roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		// mock RoundTripper не вызывает сеть, но контекст уже отменён.
+		if err := req.Context().Err(); err != nil {
+			return nil, err
+		}
+		return newResponse(http.StatusOK, nil), nil
+	})
+
+	c := header.NewHeaderCollectorWithClient(newTestClient(rt))
+	_, err := c.Collect(ctx, publicURL)
 
 	require.ErrorIs(t, err, header.ErrResponse)
 	require.ErrorIs(t, err, context.Canceled)
+}
+
+// --- Collect: SSRF-блокировка (главный новый тест) ------------------------
+
+// Loopback должен блокироваться ssrf.SafeDo до client.Do.
+func TestHeaderCollector_Collect_BlocksLoopback(t *testing.T) {
+	t.Parallel()
+
+	c := header.NewHeaderCollector()
+	_, err := c.Collect(context.Background(), "http://127.0.0.1:8080/")
+
+	require.Error(t, err)
+	require.ErrorIs(t, err, header.ErrResponse)
+	require.ErrorIs(t, err, ssrf.ErrBlockedAddress)
+
+	var blocked *ssrf.BlockedAddressError
+	require.ErrorAs(t, err, &blocked)
+	assert.Equal(t, "loopback", blocked.Reason)
+}
+
+// Приватный адрес — тоже блокируется.
+func TestHeaderCollector_Collect_BlocksPrivate(t *testing.T) {
+	t.Parallel()
+
+	c := header.NewHeaderCollector()
+	_, err := c.Collect(context.Background(), "http://10.0.0.1/")
+
+	require.Error(t, err)
+	require.ErrorIs(t, err, header.ErrResponse)
+	require.ErrorIs(t, err, ssrf.ErrBlockedAddress)
+
+	var blocked *ssrf.BlockedAddressError
+	require.ErrorAs(t, err, &blocked)
+	assert.Equal(t, "private", blocked.Reason)
+}
+
+// Запрещённая схема — блокируется до DialContext.
+func TestHeaderCollector_Collect_ForbiddenScheme(t *testing.T) {
+	t.Parallel()
+
+	c := header.NewHeaderCollector()
+	_, err := c.Collect(context.Background(), "ftp://8.8.8.8/")
+
+	require.ErrorIs(t, err, header.ErrResponse)
+	require.ErrorIs(t, err, ssrf.ErrForbiddenScheme)
 }

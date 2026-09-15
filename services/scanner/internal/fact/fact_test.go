@@ -16,7 +16,7 @@ func TestValidate(t *testing.T) {
 		expErr error
 	}{
 		{name: "Валидный тест", fact: fact.Fact{Category: "header", Key: "example_key", Value: "example"}, expErr: nil},
-		{name: "Пустой ключь", fact: fact.Fact{Category: "header", Value: "example"}, expErr: fact.ErrValidationKey},
+		{name: "Пустой ключ", fact: fact.Fact{Category: "header", Value: "example"}, expErr: fact.ErrValidationKey},
 		{name: "Неверная категория", fact: fact.Fact{Category: "example", Key: "example_key", Value: "example"}, expErr: fact.ErrValidationCategory},
 		{name: "Пустая категория", fact: fact.Fact{Key: "example_key", Value: "example"}, expErr: fact.ErrValidationCategoryVoid},
 		{name: "Пустой fact", fact: fact.Fact{}, expErr: fact.ErrVoidFact},
@@ -45,7 +45,7 @@ func TestValidateAll(t *testing.T) {
 			{Category: "header", Key: "example_key", Value: "example"},
 		}, expErr: nil},
 
-		{name: "Пустой ключь", facts: []fact.Fact{
+		{name: "Пустой ключ", facts: []fact.Fact{
 			{Category: "header", Key: "example_key", Value: "example"},
 			{Category: "header", Value: "example"},
 			{Category: "header", Key: "example_key", Value: "example"},

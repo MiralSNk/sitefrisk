@@ -27,6 +27,9 @@ func (f Fact) Validate() error {
 	case CategoryHeader, CategoryTls, CategoryExposedPath:
 		return nil
 	default:
+		// Сюда попадают как неизвестные категории, так и забытые в switch.
+		// При добавлении новой Category — добавьте её в case выше.
+
 		return ErrValidationCategory
 	}
 }
