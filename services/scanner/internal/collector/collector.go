@@ -9,7 +9,7 @@ import (
 
 const defaultTimeout = 10 * time.Second
 
-//go:generate mockery --name=Collector --output=./mocks --outpkg=mocks
+//go:generate mockery
 type Collector interface { // Для автоматической генерации всех моков `go generate ./...`
 	Collect(ctx context.Context, targetURL string) ([]fact.Fact, error)
 }
