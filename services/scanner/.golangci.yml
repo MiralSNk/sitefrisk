@@ -1,0 +1,12 @@
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - exhaustive
+  settings:
+    exhaustive:
+      # Явный default в switch не считается покрытием всех значений —
+      # иначе добавление новой Category/Kind без правки switch проходит
+      # линтер тихо, ровно та дыра, которую линтер должен закрывать.
+      default-signifies-exhaustive: false

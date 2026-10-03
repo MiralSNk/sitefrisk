@@ -27,8 +27,11 @@ type Event struct {
 }
 
 // validation - стримит промежуточные результаты
+// review: Буфер покрывает максимум возможных отправок
+// (cap(res) промежуточных + 1 финальное) -> ни в один send в этот канал не может заблокироваться,
+// даже если вызывающий RunAll бросил читать канал раньше времени (ДАЙ БОГ НЕТ...)
 func validation(ctx context.Context, cancel context.CancelFunc, res <-chan results) <-chan Event {
-	out := make(chan Event)
+	out := make(chan Event, cap(res)+1)
 
 	go func() {
 		defer cancel()
@@ -43,13 +46,10 @@ func validation(ctx context.Context, cancel context.CancelFunc, res <-chan resul
 				err = errors.Join(r.errs...)
 			}
 
-			select {
-			case out <- Event{
+			out <- Event{
 				Type:     EventCollectorDone,
 				RawFacts: r.facts,
 				Err:      err,
-			}:
-			case <-ctx.Done():
 			}
 
 			allFacts = append(allFacts, r.facts...)

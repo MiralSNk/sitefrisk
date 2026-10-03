@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/MiralSNk/sitefrisk/services/scanner/internal/fact"
-	"github.com/MiralSNk/sitefrisk/services/scanner/internal/ssrf"
+	"github.com/MiralSNk/sitefrisk/services/scanner/internal/security/ssrf"
 )
 
 // HeaderCollector собирает security-заголовки целевого сервера.

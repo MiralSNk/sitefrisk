@@ -11,8 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/MiralSNk/sitefrisk/services/scanner/internal/ssrf"
-
+	"github.com/MiralSNk/sitefrisk/services/scanner/internal/security/ssrf"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
