@@ -1,0 +1,62 @@
+@use '../../../styles/abstracts' as *;
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: $color-bg-raised;
+  border: 1px solid $color-line;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid $color-line;
+
+  @include up(md) {
+    padding: 18px 24px;
+  }
+}
+
+.model {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: $font-mono;
+  font-size: 13px;
+  color: $color-fg;
+}
+
+.version {
+  font-size: 11px;
+  color: $color-fg-muted;
+}
+
+.context {
+  font-family: $font-mono;
+  font-size: 11px;
+  color: $color-fg-muted;
+}
+
+/* Высота ленты: на телефоне от высоты экрана, на десктопе фиксированная. */
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 22px 18px;
+  height: min(60dvh, 460px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: $color-line transparent;
+
+  @include up(md) {
+    gap: 28px;
+    padding: 28px 24px;
+    height: 440px;
+  }
+}

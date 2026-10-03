@@ -1,0 +1,25 @@
+@use '../../../styles/abstracts' as *;
+
+.frame {
+  position: relative;
+  /* Размер уголка: меняется атрибутом data-size. */
+  --corner: 26px;
+
+  &[data-size='sm'] {
+    --corner: 22px;
+  }
+}
+
+.corner {
+  position: absolute;
+  z-index: $z-frame;
+  width: var(--corner);
+  height: var(--corner);
+  pointer-events: none;
+  border: 0 solid $color-gold;
+
+  &[data-corner='tl'] { top: -1px; left: -1px; border-top-width: 2px; border-left-width: 2px; }
+  &[data-corner='tr'] { top: -1px; right: -1px; border-top-width: 2px; border-right-width: 2px; }
+  &[data-corner='bl'] { bottom: -1px; left: -1px; border-bottom-width: 2px; border-left-width: 2px; }
+  &[data-corner='br'] { bottom: -1px; right: -1px; border-bottom-width: 2px; border-right-width: 2px; }
+}

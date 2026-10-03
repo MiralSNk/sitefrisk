@@ -1,0 +1,71 @@
+@use '../../../styles/abstracts' as *;
+
+.gauge {
+  position: relative;
+  flex-shrink: 0;
+  /* Цвет заполнения: выставляется тоном ниже. */
+  --tone: #{$color-teal};
+  @include tone(--tone);
+
+  &[data-variant='disc'] {
+    width: 104px;
+    height: 104px;
+  }
+
+  &[data-variant='ring'] {
+    width: 104px;
+    height: 104px;
+
+    @include up(md) {
+      width: 116px;
+      height: 116px;
+    }
+  }
+}
+
+.track {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(var(--tone) var(--fill), rgba(255, 255, 255, 0.07) 0);
+
+  /* Вырезаем середину: в варианте ring остаётся тонкое кольцо. */
+  .gauge[data-variant='ring'] & {
+    mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+  }
+}
+
+.center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 50%;
+
+  .gauge[data-variant='disc'] & {
+    inset: 8px;
+    background: $color-bg;
+  }
+}
+
+.value {
+  font-family: $font-mono;
+  line-height: 1;
+  color: var(--tone);
+  font-size: 20px;
+
+  .gauge[data-variant='ring'] & {
+    color: $color-fg;
+    font-size: 28px;
+  }
+}
+
+.caption {
+  @include mono-label(9px, 0.08em);
+  color: $color-fg-muted;
+  text-align: center;
+  max-width: 80%;
+}

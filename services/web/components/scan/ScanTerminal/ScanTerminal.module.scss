@@ -1,0 +1,42 @@
+@use '../../../styles/abstracts' as *;
+@use '../../../styles/keyframes';
+
+.terminal {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+  min-height: 180px;
+  font-family: $font-mono;
+  font-size: 11px;
+
+  @include up(md) {
+    min-height: 200px;
+    font-size: 12px;
+  }
+}
+
+.line {
+  display: flex;
+  gap: 14px;
+  opacity: var(--opacity);
+  transition: opacity 0.4s;
+  animation: rise 0.25s both;
+
+  @include up(md) {
+    gap: 20px;
+  }
+}
+
+.time {
+  flex-shrink: 0;
+  width: 56px;
+  color: $color-fg-muted;
+}
+
+.text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: $color-fg-muted;
+  @include tone(color);
+}

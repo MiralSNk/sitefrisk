@@ -1,0 +1,39 @@
+@use '../../../styles/abstracts' as *;
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: $z-overlay;
+  pointer-events: none;
+}
+
+.band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--top);
+  height: var(--height);
+  opacity: var(--opacity);
+  transform: translateX(var(--offset));
+  mix-blend-mode: screen;
+
+  &[data-tone='cyan'] { background: rgba($color-cyan, 0.5); }
+  &[data-tone='magenta'] { background: rgba($color-magenta, 0.5); }
+  &[data-tone='gold'] { background: rgba($color-gold, 0.4); }
+}
+
+.snippet {
+  position: absolute;
+  top: var(--top);
+  left: var(--left);
+  max-width: 90vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: $font-mono;
+  font-size: 11px;
+  opacity: 0.55;
+
+  &[data-tone='cyan'] { color: $color-cyan; }
+  &[data-tone='magenta'] { color: $color-magenta; }
+}

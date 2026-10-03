@@ -1,0 +1,105 @@
+@use '../../../styles/abstracts' as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+}
+
+.suggestions {
+  display: flex;
+  gap: 8px;
+  padding: 0 18px 16px;
+  /* Телефон: одна строка с горизонтальной прокруткой. */
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @include up(md) {
+    flex-wrap: wrap;
+    overflow: visible;
+    padding: 0 24px 18px;
+  }
+}
+
+.suggestion {
+  @include button-reset;
+  @include focus-ring;
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid $color-line;
+  font-family: $font-mono;
+  font-size: 11px;
+  color: $color-fg-muted;
+  white-space: nowrap;
+  transition: border-color $duration-fast, color $duration-fast, opacity $duration-fast;
+
+  @include fine-pointer {
+    &:hover:not(:disabled) {
+      border-color: $color-cyan;
+      color: $color-fg;
+    }
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: progress;
+  }
+}
+
+.form {
+  display: flex;
+  border-top: 1px solid $color-line;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  min-height: 52px;
+  padding: 14px 18px;
+  background: transparent;
+  border: 0;
+  outline: none;
+  font-family: $font-mono;
+  font-size: 16px; /* без зума на iOS */
+  color: $color-fg;
+  transition: background $duration-fast;
+
+  &::placeholder {
+    color: rgba($color-fg-muted, 0.7);
+  }
+
+  &:focus {
+    background: rgba($color-cyan, 0.04);
+  }
+
+  @include up(md) {
+    font-size: 13px;
+    padding: 18px 24px;
+  }
+}
+
+.send {
+  @include button-reset;
+  @include focus-ring;
+  min-width: 56px;
+  padding: 0 20px;
+  background: $color-cyan;
+  color: $color-bg;
+  font-family: $font-mono;
+  font-size: 14px;
+  transition: filter $duration-fast, opacity $duration-fast;
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.1);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}

@@ -1,0 +1,31 @@
+@use '../../../styles/abstracts' as *;
+@use '../../../styles/keyframes';
+
+.log {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  padding: 16px;
+  background: $color-bg-raised;
+  border: 1px solid $color-line;
+}
+
+.label {
+  @include mono-label(10px, 0.08em);
+  font-style: italic;
+  color: $color-fg-muted;
+  margin-bottom: 8px;
+}
+
+.line {
+  min-height: 2.9em; /* две строки: длинные записи переносятся на узких экранах */
+  font-family: $font-mono;
+  font-size: 12px;
+  line-height: 1.45;
+  color: $color-cyan;
+  overflow-wrap: anywhere;
+}
+
+.caret {
+  animation: flicker 1s infinite steps(1);
+}

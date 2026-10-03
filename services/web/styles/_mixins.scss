@@ -1,0 +1,81 @@
+// =============================================================================
+// МИКСИНЫ
+// Повторяемые паттерны: медиазапросы, типографические пресеты, тона.
+// =============================================================================
+@use 'sass:map';
+@use 'tokens' as *;
+
+/// Mobile-first медиазапрос: стили применяются ОТ брейкпоинта и шире.
+/// @param {String} $bp - ключ из $breakpoints (sm | md | lg | xl)
+/// @example scss  @include up(md) { grid-template-columns: 1fr 1fr; }
+@mixin up($bp) {
+  @media (min-width: map.get($breakpoints, $bp)) {
+    @content;
+  }
+}
+
+/// Desktop-first медиазапрос: стили применяются ДО брейкпоинта (не включая его).
+/// @param {String} $bp - ключ из $breakpoints
+@mixin down($bp) {
+  @media (max-width: (map.get($breakpoints, $bp) - 0.02px)) {
+    @content;
+  }
+}
+
+/// Только для устройств с точным указателем (мышь, тачпад).
+/// Сюда идут hover-эффекты и кастомный курсор: на тач-экранах они не нужны.
+@mixin fine-pointer {
+  @media (hover: hover) and (pointer: fine) {
+    @content;
+  }
+}
+
+/// Для пользователей с системной настройкой «уменьшить движение».
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
+/// Пресет моноширинной метки: eyebrow, подписи, таймстемпы.
+/// @param {Length} $size - кегль
+/// @param {Number} $tracking - межбуквенный интервал (em)
+@mixin mono-label($size: 11px, $tracking: 0.12em) {
+  font-family: $font-mono;
+  font-size: $size;
+  letter-spacing: $tracking;
+  text-transform: uppercase;
+}
+
+/// Генерирует правила `&[data-tone='...']` для каждого тона из $tones.
+/// Цвет статуса задаётся в разметке атрибутом, без inline-стилей.
+/// @param {String} $property - CSS-свойство, которое красим (color, background, border-color...)
+/// @example scss  .dot { @include tone(background); }
+@mixin tone($property: color) {
+  @each $name, $value in $tones {
+    &[data-tone='#{$name}'] {
+      // Интерполяция значения: так миксин работает и с CSS custom properties (--tone).
+      #{$property}: #{$value};
+    }
+  }
+}
+
+/// Доступное кольцо фокуса, видно только при навигации с клавиатуры.
+@mixin focus-ring {
+  &:focus-visible {
+    outline: 1px solid $color-cyan;
+    outline-offset: 2px;
+  }
+}
+
+/// Сбрасывает браузерные стили кнопки, оставляя её доступной.
+@mixin button-reset {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}

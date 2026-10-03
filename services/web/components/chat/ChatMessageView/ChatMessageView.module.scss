@@ -1,0 +1,89 @@
+@use '../../../styles/abstracts' as *;
+@use '../../../styles/keyframes';
+
+.user {
+  align-self: flex-end;
+  max-width: 85%;
+  padding: 12px 16px;
+  background: $color-bg-elevated;
+  font-size: 14px;
+  line-height: 1.6;
+  color: $color-fg;
+  overflow-wrap: anywhere;
+  animation: rise 0.3s both;
+}
+
+.model {
+  display: flex;
+  gap: 12px;
+  animation: rise 0.35s both;
+
+  @include up(md) {
+    gap: 14px;
+  }
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba($color-cyan, 0.35);
+  font-family: $font-mono;
+  font-size: 12px;
+  color: $color-cyan;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 2px;
+}
+
+.ref {
+  @include mono-label(10px, 0.1em);
+  color: $color-fg-muted;
+  @include tone(color);
+}
+
+.paragraph {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: $color-fg;
+  white-space: pre-wrap;
+  text-wrap: pretty;
+
+  @include up(md) {
+    font-size: 14.5px;
+  }
+}
+
+/* Код: на узких экранах длинные строки прокручиваются горизонтально, а не ломают вёрстку. */
+.code {
+  margin: 0;
+  padding: 14px 16px;
+  background: $color-bg;
+  border: 1px solid $color-line;
+  font-family: $font-mono;
+  font-size: 12px;
+  line-height: 1.65;
+  color: $color-teal;
+  white-space: pre;
+  overflow-x: auto;
+
+  @include up(md) {
+    font-size: 12.5px;
+  }
+}
+
+.caret {
+  font-family: $font-mono;
+  color: $color-cyan;
+  animation: flicker 0.8s infinite steps(1);
+}

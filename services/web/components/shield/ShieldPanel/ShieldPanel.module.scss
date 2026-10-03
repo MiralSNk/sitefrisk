@@ -1,0 +1,40 @@
+@use '../../../styles/abstracts' as *;
+@use '../../../styles/keyframes';
+
+.panel {
+  aspect-ratio: 1;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  background: radial-gradient(circle at 50% 45%, rgba($color-cyan, 0.06), transparent 65%);
+
+  @include up(sm) {
+    max-width: 400px;
+  }
+}
+
+.placeholder {
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  border: 1px dashed rgba($color-cyan, 0.25);
+  animation: dot-pulse 1.6s infinite;
+}
+
+.labels {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: $z-frame;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+  @include mono-label(10px, 0.05em);
+  color: $color-fg-muted;
+}
+
+.live {
+  color: $color-cyan;
+  animation: flicker 2s infinite steps(1);
+}

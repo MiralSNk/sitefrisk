@@ -1,0 +1,69 @@
+@use '../../../styles/abstracts' as *;
+@use '../../../styles/keyframes';
+
+.root {
+  position: absolute;
+  inset: 0;
+  z-index: $z-backdrop;
+  pointer-events: none;
+
+  /* Reduced motion: всё замирает. */
+  &[data-animated='false'] .sweep,
+  &[data-animated='false'] .rail {
+    animation: none;
+  }
+}
+
+.scanlines {
+  position: absolute;
+  inset: 0;
+  opacity: 0.6;
+  background-image: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0, transparent 1px, transparent 3px);
+}
+
+.sweep {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -140px;
+  height: 140px;
+  background: linear-gradient(to bottom, transparent, rgba($color-cyan, 0.08), transparent);
+  animation: scan-sweep 7s linear infinite;
+}
+
+.rail {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 16px;
+  opacity: 0.5;
+  animation: rail-drift 12s linear infinite;
+
+  @include up(md) {
+    width: 40px;
+  }
+
+  &[data-side='left'] {
+    left: 0;
+    background-image: repeating-linear-gradient(180deg, rgba($color-cyan, 0.14) 0 2px, transparent 2px 18px);
+  }
+
+  &[data-side='right'] {
+    right: 0;
+    background-image: repeating-linear-gradient(180deg, rgba($color-magenta, 0.14) 0 2px, transparent 2px 22px);
+    animation-duration: 15s;
+    animation-direction: reverse;
+  }
+}
+
+/* Подсветка под курсором. На тач-устройствах не нужна. */
+.spotlight {
+  position: absolute;
+  inset: 0;
+  display: none;
+  background: radial-gradient(circle at var(--spot-x) var(--spot-y), rgba($color-cyan, 0.14), transparent 42%);
+
+  @include fine-pointer {
+    display: block;
+  }
+}
