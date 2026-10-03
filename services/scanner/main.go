@@ -4,19 +4,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
+
+	"github.com/MiralSNk/sitefrisk/services/scanner/internal/factory"
+	"github.com/MiralSNk/sitefrisk/services/scanner/internal/handlers"
 )
-
-//TODO: позже сюда надо бы добавить пассивный сбор фактов (заголовки, TLS, пути)
-// и SSRF-guard — проверка резолвленного IP против приватных диапазонов
-// перед любым исходящим запросом к целевому сайту.
-
-// healthHandler — обработчик /health. Отдаёт статичный JSON без логики,
-// нужен только чтобы docker-compose/оркестратор могли проверить,
-// что процесс жив и отвечает на HTTP.
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"status":"ok", "service":"scanner"}`))
-}
 
 func main() {
 	port := os.Getenv("SCANNER_PORT") // -> Переменная окружения docker-compose
@@ -25,11 +17,18 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/health", healthHandler)
+	mux.HandleFunc("/health", handlers.Health)
+	mux.HandleFunc("/scan", handlers.Scan(factory.Registrations))
+
+	srv := &http.Server{
+		Addr:              ":" + port,
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
 
 	log.Println("Scanner слушает: " + port)
 
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
+	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }

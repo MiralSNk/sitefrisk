@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/MiralSNk/sitefrisk/services/scanner/internal/fact"
+	"github.com/MiralSNk/sitefrisk/services/scanner/internal/security/sanitize"
 )
 
 // results — внутренний тип для передачи между стадиями пайплайна
@@ -44,6 +45,10 @@ func workerCollectors(
 			defer wg.Done()
 
 			f, err := job.Collect(ctx, targetURL)
+
+			for i := range f {
+				f[i].Value = sanitize.Clean(f[i].Value)
+			}
 
 			// Не репортим ошибку, если она — следствие отмены родительского контекста:
 			// validation добавит ctx.Err() в финальное событие сама, а в промежуточном
