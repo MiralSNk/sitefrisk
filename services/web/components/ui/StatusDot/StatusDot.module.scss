@@ -1,0 +1,20 @@
+@use '../../../styles/abstracts' as *;
+@use '../../../styles/keyframes';
+
+.dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: $color-cyan;
+  @include tone(background);
+
+  &[data-pulse='slow'] {
+    animation: dot-pulse 2s infinite;
+  }
+
+  &[data-pulse='fast'] {
+    animation: dot-pulse 1.2s infinite;
+  }
+}

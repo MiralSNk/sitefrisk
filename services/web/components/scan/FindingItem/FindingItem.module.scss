@@ -1,0 +1,109 @@
+@use '../../../styles/abstracts' as *;
+@use '../../../styles/keyframes';
+
+.item {
+  @include button-reset;
+  @include focus-ring;
+  width: 100%;
+  text-align: left;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 16px;
+  align-items: start;
+  padding: 20px 14px;
+  border-top: 1px solid $color-line;
+  background: transparent;
+  transition: background 0.3s;
+  animation: rise 0.5s var(--delay) both;
+  /* Тон критичности: красит точки и мета-строку. */
+  --tone: #{$color-teal};
+  @include tone(--tone);
+
+  /* От md CTA уходит в отдельную правую колонку. */
+  @include up(md) {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 20px;
+    padding: 24px 18px;
+  }
+
+  @include fine-pointer {
+    &:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+  }
+
+  &[data-active] {
+    background: rgba($color-cyan, 0.045);
+  }
+
+  &[aria-disabled='true'] {
+    cursor: progress;
+  }
+}
+
+.dots {
+  display: flex;
+  gap: 3px;
+  margin-top: 7px;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+
+  &[data-on] {
+    background: var(--tone);
+  }
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.title {
+  font-family: $font-sans;
+  font-size: 15px;
+  font-weight: 600;
+  color: $color-fg;
+
+  @include up(md) {
+    font-size: 16px;
+  }
+}
+
+.evidence {
+  font-family: $font-mono;
+  font-size: 12px;
+  line-height: 1.5;
+  color: $color-fg-muted;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  font-family: $font-mono;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--tone);
+}
+
+.cta {
+  grid-column: 2;
+  font-family: $font-mono;
+  font-size: 11px;
+  white-space: nowrap;
+  color: $color-fg-muted;
+
+  .item[data-active] & {
+    color: $color-cyan;
+  }
+
+  @include up(md) {
+    grid-column: auto;
+    margin-top: 3px;
+  }
+}

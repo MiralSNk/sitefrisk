@@ -1,0 +1,64 @@
+@use '../../../styles/abstracts' as *;
+
+/*
+ * Колонки фонового кода. Видимость настроена так, чтобы код не спорил с контентом:
+ *  - телефон: только левая колонка, бледнее и мельче;
+ *  - планшет: левая + правая;
+ *  - десктоп: все три.
+ */
+.code {
+  position: absolute;
+  top: 5%;
+  bottom: 5%;
+  margin: 0;
+  overflow: hidden;
+  font-family: $font-mono;
+  font-size: 10px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+
+  @include up(md) {
+    font-size: 12px;
+  }
+
+  &[data-position='left'] {
+    left: 3%;
+    max-width: 92%;
+    color: $color-cyan;
+    opacity: 0.06;
+
+    @include up(md) {
+      max-width: 40%;
+      opacity: 0.08;
+    }
+  }
+
+  &[data-position='right'] {
+    right: 3%;
+    max-width: 36%;
+    text-align: right;
+    color: $color-fg-muted;
+    opacity: 0.08;
+    display: none;
+
+    @include up(md) {
+      display: block;
+    }
+  }
+
+  &[data-position='center'] {
+    top: 38%;
+    left: 50%;
+    width: 30%;
+    transform: translateX(-50%);
+    text-align: center;
+    color: $color-gold;
+    opacity: 0.06;
+    display: none;
+
+    @include up(lg) {
+      display: block;
+    }
+  }
+}

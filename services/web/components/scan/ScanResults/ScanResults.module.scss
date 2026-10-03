@@ -1,0 +1,56 @@
+@use '../../../styles/abstracts' as *;
+@use '../../../styles/keyframes';
+
+/* Одна колонка до lg, две — от lg. Чат на десктопе «прилипает» при прокрутке. */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
+
+  @include up(lg) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 72px;
+  }
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  min-width: 0;
+
+  @include up(lg) {
+    gap: 48px;
+  }
+}
+
+.right {
+  min-width: 0;
+  animation: rise 0.7s 0.3s $ease-out both;
+
+  @include up(lg) {
+    position: sticky;
+    top: 24px;
+  }
+}
+
+.findings {
+  display: flex;
+  flex-direction: column;
+}
+
+.findingsTitle {
+  margin: 0;
+  padding-bottom: 14px;
+  @include mono-label(11px, 0.14em);
+  font-weight: 400;
+  color: $color-fg-muted;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-bottom: 1px solid $color-line;
+}

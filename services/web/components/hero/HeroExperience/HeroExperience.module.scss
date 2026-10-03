@@ -1,0 +1,38 @@
+@use '../../../styles/abstracts' as *;
+
+.hero {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  isolation: isolate;
+  padding: clamp(32px, 6vh, 64px) $page-gutter clamp(40px, 7vh, 72px);
+  /* Координаты подсветки: обновляются хуком usePointerSpotlight. */
+  --spot-x: 50%;
+  --spot-y: 40%;
+
+  /* Во время скана/чата контент прижимается к верху: так меньше прыжков. */
+  &:not([data-phase='idle']) {
+    justify-content: flex-start;
+  }
+}
+
+.content {
+  position: relative;
+  z-index: $z-content;
+  width: 100%;
+  max-width: $content-max;
+  margin: 0 auto;
+
+  /* Глитч «инверсия»: весь контент на долю секунды переворачивает цвета. */
+  &[data-glitch='invert'] {
+    filter: invert(1) hue-rotate(180deg);
+  }
+
+  /* Глитч «тряска»: смещение приходит из CSS-переменных. */
+  &[data-glitch='shake'] {
+    transform: translate(var(--shake-x), var(--shake-y));
+  }
+}

@@ -1,69 +1,23 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+/**
+ * Главная страница.
+ *
+ * Серверный компонент: собирает каркас (шапка → хиро → подвал).
+ * Вся интерактивность изолирована в клиентском `HeroExperience`,
+ * поэтому шапка и подвал рендерятся на сервере и не попадают в клиентский бандл.
+ */
+import { SiteFooter } from '@/components/layout/SiteFooter/SiteFooter';
+import { SiteHeader } from '@/components/layout/SiteHeader/SiteHeader';
+import { HeroExperience } from '@/components/hero/HeroExperience/HeroExperience';
+import styles from './page.module.scss';
 
-export default function Home() {
+export default function HomePage() {
   return (
     <div className={styles.page}>
+      <SiteHeader />
       <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+        <HeroExperience />
       </main>
+      <SiteFooter />
     </div>
   );
 }
