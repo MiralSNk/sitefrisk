@@ -20,6 +20,8 @@ services/web/node_modules/
 # --- Секреты и окружение ---
 .env
 .env.*
+*.env
+*.env.*
 !*.env.example
 
 # --- IDE ---
