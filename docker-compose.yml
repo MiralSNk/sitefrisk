@@ -43,11 +43,25 @@ services:
     networks:
       - scanner-ml
 
+  kafka:
+    build: ./services/kafka
+    env_file:
+      - ./kafka.env
+    ports:
+      - "${KAFKA_PORT}:${KAFKA_PORT}"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks:
+      - scanner-ml
+
+volumes:
+  kafka-data:
+
 networks:
   public:
   web-auth:
   web-scanner:
   scanner-ml:
 
-#TODO: append Posgres/Redis/NATS + (maybe Kafka + K8t)
+#TODO: append Posgres and K8t
 #TODO: сейчас `public` избыточно, однако в будующем можно добавить `reverse-proxy/API Gateway перед web`
