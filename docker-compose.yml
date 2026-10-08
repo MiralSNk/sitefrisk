@@ -1,67 +1,140 @@
 services:
   web:
     build: ./services/web
+    env_file: [./env/web.env]
     ports:
       - "${WEB_PORT}:${WEB_PORT}"
-    environment:
-      - PORT=${WEB_PORT}
+    secrets:
+      - jwt_public
     depends_on:
-      - auth
-      - scanner
-    networks:
-      - public
-      - web-auth
-      - web-scanner
+      auth:
+        condition: service_started
+      scanner:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+    networks: [public, web-auth, web-scanner, kafka-web]
+    restart: unless-stopped
   
   auth:
     build: ./services/auth
-    expose:
-      - "${AUTH_PORT}"
-    environment:
-      - AUTH_PORT=${AUTH_PORT}
-    networks:
-      - web-auth
+    env_file: [./env/auth.env]
+    secrets:
+      - jwt_private
+      - jwt_public
+    depends_on:
+      auth-db: 
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks: [web-auth, auth-db-net, kafka-auth]
+    restart: unless-stopped
 
   scanner:
     build: ./services/scanner
-    expose:
-      - "${SCANNER_PORT}"
-    environment:
-      - SCANNER_PORT=${SCANNER_PORT}
+    env_file: [./env/scanner.env]
+    secrets:
+      - jwt_public
     depends_on:
-      - ml
-    networks:
-      - web-scanner
-      - scanner-ml
+      scanner-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks: [web-scanner, scanner-db-net, kafka-scanner]
+    restart: unless-stopped
 
   ml:
     build: ./services/ml
-    expose:
-      - "${ML_PORT}"
-    environment:
-      - ML_PORT=${ML_PORT}
-    networks:
-      - scanner-ml
+    env_file: [./env/ml.env]
+    depends_on: 
+      ml-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks: [ml-db-net, kafka-ml]
+    restart: unless-stopped
+
+  auth-db:
+    image: postgres:17.6
+    env_file: [./env/auth-db.env]
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks: [auth-db-net]
+    restart: unless-stopped
+
+  scanner-db:
+    image: postgres:17.6
+    env_file: [./env/scanner-db.env]
+    volumes:
+      - scanner-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks: [scanner-db-net]
+    restart: unless-stopped
+
+  ml-db:
+    image: postgres:17.6
+    env_file: [./env/ml-db.env]
+    volumes:
+      - ml-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks: [ml-db-net]
+    restart: unless-stopped
 
   kafka:
     build: ./services/kafka
-    env_file:
-      - ./kafka.env
-    ports:
-      - "${KAFKA_PORT}:${KAFKA_PORT}"
+    env_file: [./env/kafka.env]
     volumes:
       - kafka-data:/var/lib/kafka/data
-    networks:
-      - scanner-ml
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks: [kafka-auth, kafka-scanner, kafka-ml, kafka-web]
+    restart: unless-stopped
+
+secrets:
+  jwt_private: 
+    file: ./secrets/jwt-private.pem
+  jwt_public:
+    file: ./secrets/jwt-public.pem
 
 volumes:
+  auth-db-data:
+  scanner-db-data:
+  ml-db-data:
   kafka-data:
 
 networks:
   public:
+
   web-auth:
   web-scanner:
-  scanner-ml:
 
-#TODO: append Posgres and K8t
-#TODO: сейчас `public` избыточно, однако в будующем можно добавить `reverse-proxy/API Gateway перед web`
+  auth-db-net:
+  scanner-db-net:
+  ml-db-net:
+
+  kafka-auth:
+  kafka-web:
+  kafka-scanner:
+  kafka-ml:
+
+#TODO: append K8t

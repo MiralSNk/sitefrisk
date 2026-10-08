@@ -1,7 +1,8 @@
-scanner
-*.log
-.git
+*.exe
 *.test
-coverage.out
-.idea/
+.env
+.env.*
+!.env.example
 .vscode/
+.idea/
+.DS_Store
