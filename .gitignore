@@ -18,11 +18,17 @@ services/web/.next/
 services/web/node_modules/
 
 # --- Секреты и окружение ---
+env/
 .env
 .env.*
 *.env
 *.env.*
 !*.env.example
+docker-compose.override.yml
+
+# --- JWT токены --- 
+*.pem
+secrets/
 
 # --- IDE ---
 .vscode/

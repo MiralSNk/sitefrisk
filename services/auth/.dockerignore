@@ -1,7 +1,9 @@
 target/
-.git
-*.iml
+*.class
+.mvn/wrapper/maven-wrapper.jar
+.env
+.env.*
+!.env.example
+.vscode/
 .idea/
-.mvn/
-mvnw
-mvnw.cmd
+.DS_Store

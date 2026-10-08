@@ -1,7 +1,6 @@
 __pycache__/
 *.pyc
 .venv/
-.git
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
@@ -12,3 +11,9 @@ checkpoints/
 *.bin
 *.pt
 *.ckpt
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+.DS_Store
