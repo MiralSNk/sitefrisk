@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS messages;
+DROP TABLE IF EXISTS chat_scans;
+DROP TABLE IF EXISTS chats;
+DROP TABLE IF EXISTS processed_events;
+DROP TABLE IF EXISTS facts;
+DROP TABLE IF EXISTS scans;
+DROP TABLE IF EXISTS model_versions;
+
+DROP TYPE IF EXISTS message_role;

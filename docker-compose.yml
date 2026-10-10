@@ -1,120 +1,149 @@
+x-postgres: &postgres
+  image: postgres:17.6
+  command:
+    - postgres
+    - -c
+    - lock_timeout=5s
+    - -c
+    - statement_timeout=30s
+    - -c
+    - idle_in_transaction_session_timeout=60s
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+    interval: 5s
+    timeout: 5s
+    retries: 10
+    start_period: 10s
+  restart: unless-stopped
+
+x-migrate: &migrate
+  image: migrate/migrate:v4.20.1
+  entrypoint: ["/bin/sh", "-c"]
+  command: ['migrate -path=/migrations -database "$$MIGRATE_DATABASE_URL" up']
+  restart: "no"
+
 services:
+
+  # ======================= Приложения =========================
   web:
     build: ./services/web
     env_file: [./env/web.env]
-    ports:
-      - "${WEB_PORT}:${WEB_PORT}"
-    secrets:
-      - jwt_public
+    ports: ["${WEB_PORT}:${WEB_PORT}"]
+    secrets: [jwt_public]
     depends_on:
-      auth:
-        condition: service_started
-      scanner:
-        condition: service_started
-      kafka:
-        condition: service_healthy
+      auth: {condition: service_started}
+      scanner: {condition: service_started}
+      kafka-init: {condition: service_completed_successfully}
     networks: [public, web-auth, web-scanner, kafka-web]
     restart: unless-stopped
-  
+
   auth:
     build: ./services/auth
     env_file: [./env/auth.env]
-    secrets:
-      - jwt_private
-      - jwt_public
+    secrets: [jwt_private, jwt_public]
     depends_on:
-      auth-db: 
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
+      auth-db:      {condition: service_healthy}
+      auth-migrate: {condition: service_completed_successfully}
+      kafka-init:   {condition: service_completed_successfully}
     networks: [web-auth, auth-db-net, kafka-auth]
     restart: unless-stopped
 
   scanner:
     build: ./services/scanner
     env_file: [./env/scanner.env]
-    secrets:
-      - jwt_public
+    secrets: [jwt_public]
     depends_on:
-      scanner-db:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
+      scanner-db:      {condition: service_healthy}
+      scanner-migrate: {condition: service_completed_successfully}
+      kafka-init:      {condition: service_completed_successfully}
     networks: [web-scanner, scanner-db-net, kafka-scanner]
     restart: unless-stopped
 
   ml:
     build: ./services/ml
     env_file: [./env/ml.env]
-    depends_on: 
-      ml-db:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
+    depends_on:
+      ml-db:      {condition: service_healthy}
+      ml-migrate: {condition: service_completed_successfully}
+      kafka-init: {condition: service_completed_successfully}
     networks: [ml-db-net, kafka-ml]
     restart: unless-stopped
 
-  auth-db:
-    image: postgres:17.6
-    env_file: [./env/auth-db.env]
-    volumes:
-      - auth-db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
-    networks: [auth-db-net]
-    restart: unless-stopped
-
+  # ======================= Базы данных ========================
   scanner-db:
-    image: postgres:17.6
+    <<: *postgres
     env_file: [./env/scanner-db.env]
     volumes:
       - scanner-db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
+      - ./scripts/db-init:/docker-entrypoint-initdb.d:ro
     networks: [scanner-db-net]
-    restart: unless-stopped
+
+  auth-db:
+    <<: *postgres
+    env_file: [./env/auth-db.env]
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+      - ./scripts/db-init:/docker-entrypoint-initdb.d:ro
+    networks: [auth-db-net]
 
   ml-db:
-    image: postgres:17.6
+    <<: *postgres
     env_file: [./env/ml-db.env]
     volumes:
       - ml-db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
+      - ./scripts/db-init:/docker-entrypoint-initdb.d:ro
     networks: [ml-db-net]
-    restart: unless-stopped
+
+  # =================== Миграции (одноразовые) =================
+
+  auth-migrate:
+    <<: *migrate
+    env_file: [./env/auth-db.env]
+    volumes: ["./services/auth/migrations:/migrations:ro"]
+    depends_on:
+      auth-db: {condition: service_healthy}
+    networks: [auth-db-net]
+
+  scanner-migrate:
+    <<: *migrate
+    env_file: [./env/scanner-db.env]
+    volumes: ["./services/scanner/migrations:/migrations:ro"]
+    depends_on:
+      scanner-db: {condition: service_healthy}
+    networks: [scanner-db-net]
+
+  ml-migrate:
+    <<: *migrate
+    env_file: [./env/ml-db.env]
+    volumes: ["./services/ml/migrations:/migrations:ro"]
+    depends_on:
+      ml-db: {condition: service_healthy}
+    networks: [ml-db-net]
+
+  # ========================== Kafka ===========================
 
   kafka:
     build: ./services/kafka
     env_file: [./env/kafka.env]
-    volumes:
-      - kafka-data:/var/lib/kafka/data
+    volumes: [kafka-data:/var/lib/kafka/data]
     healthcheck:
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
       interval: 10s
       timeout: 10s
       retries: 10
       start_period: 30s
-    networks: [kafka-auth, kafka-scanner, kafka-ml, kafka-web]
+    networks: [kafka-auth, kafka-scanner, kafka-ml, kafka-web, kafka-admin]
     restart: unless-stopped
 
-secrets:
-  jwt_private: 
-    file: ./secrets/jwt-private.pem
-  jwt_public:
-    file: ./secrets/jwt-public.pem
+  kafka-init:
+    build: ./services/kafka
+    env_file: [./env/kafka.env]
+    entrypoint: ["/bin/bash", "/init/create-topics.sh"]
+    volumes: ["./services/kafka/init:/init:ro"]
+    depends_on:
+      kafka: {condition: service_healthy}
+    networks: [kafka-admin]
+    restart: "no"
 
 volumes:
   auth-db-data:
@@ -136,5 +165,12 @@ networks:
   kafka-web:
   kafka-scanner:
   kafka-ml:
+  kafka-admin:
 
-#TODO: append K8t
+secrets:
+  jwt_private:
+    file: ./secrets/jwt-private.pem
+  jwt_public:
+    file: ./secrets/jwt-public.pem
+
+# TODO: K8s
